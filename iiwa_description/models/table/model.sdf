@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="table">
+    <pose>0 0 0 0 0 0</pose>
+    <link name="t_base">
+      <visual name="visual">
+      <pose frame="">0 0 0.0555</pose>
+        <geometry>
+          <box> 
+            <size>1.22 2.14 0.111</size>
+          </box>
+        </geometry> 
+      </visual>
+      <collision name="collision">
+      <pose frame="">0 0 0.0555</pose>
+        <geometry>
+          <box> 
+            <size>1.22 2.14 0.111</size>
+          </box>
+        </geometry> 
+        <!-- added friction=0 -->
+        <surface>
+          <friction>
+            <bullet>
+              <friction>0</friction>
+            </bullet>
+          </friction>
+        </surface>
+        <!-- end added friction=0 -->
+      </collision>
+    </link>
+    <link name="t_up_rim">
+      <visual name="visual">
+      <pose frame="">0 1.02 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>1.02 0.1 0.029</size>
+          </box>
+        </geometry> 
+      </visual>
+      <collision name="collision">
+      <pose frame="">0 1.02 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>1.02 0.1 0.029</size>
+          </box>
+        </geometry> 
+      </collision>
+    </link>
+    <link name="t_down_rim">
+      <visual name="visual">
+      <pose frame="">0 -1.02 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>1.02 0.1 0.029</size>
+          </box>
+        </geometry> 
+      </visual>
+      <collision name="collision">
+      <pose frame="">0 -1.02 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>1.02 0.1 0.029</size>
+          </box>
+        </geometry> 
+      </collision>
+    </link>
+    <link name="t_right_rim">
+      <visual name="visual">
+      <pose frame="">0.56 0 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>0.1 2.14 0.029</size>
+          </box>
+        </geometry> 
+      </visual>
+      <collision name="collision">
+      <pose frame="">0.56 0 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>0.1 2.14 0.029</size>
+          </box>
+        </geometry> 
+      </collision>
+    </link>
+    <link name="t_left_rim">
+      <visual name="visual">
+      <pose frame="">-0.56 0 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>0.1 2.14 0.029</size>
+          </box>
+        </geometry> 
+      </visual>
+      <collision name="collision">
+      <pose frame="">-0.56 0 0.1255</pose>
+        <geometry>
+          <box> 
+            <size>0.1 2.14 0.029</size>
+          </box>
+        </geometry> 
+      </collision>
+    </link>
+    <static>1</static>
+  </model>
+</sdf>
