@@ -14,6 +14,20 @@
       <uri>model://sun</uri>
     </include>
 
+    <include>
+      <uri>model://frame</uri>
+    </include>
+
+    <include>
+      <uri>model://table</uri>
+    </include>
+
+    <include>
+      <uri>model://puck</uri>
+    </include>
+
+    <gravity>0 0 -9.81</gravity>
+
     <physics name="default_physics" default="0" type="ode">
       <max_step_size>0.01</max_step_size>
       <real_time_factor>1</real_time_factor>
