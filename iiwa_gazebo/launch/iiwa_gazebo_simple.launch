@@ -13,7 +13,7 @@
     
     <arg name="hardware_interface" default="EffortJointInterface" />
     <arg name="robot_name" default="iiwa" />
-    <arg name="model" default="iiwa14"/>
+    <arg name="model" default="iiwa7"/>
     
     <!-- Loads the Gazebo world. -->
     <include file="$(find iiwa_gazebo)/launch/iiwa_world.launch">
@@ -22,7 +22,6 @@
         <arg name="model" value="$(arg model)" />
     </include>
 
-    <group  ns="$(arg robot_name)" if="$(arg trajectory)">
     <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
     <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>

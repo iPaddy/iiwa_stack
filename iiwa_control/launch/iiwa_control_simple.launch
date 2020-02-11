@@ -4,25 +4,23 @@
     <!-- Launches the controllers according to the hardware interface selected -->
     <!-- Everythings is spawned under a namespace with the same name as the robot's. -->
     
-    <arg name="hardware_interface" default="JointPositionController"/>
-    <arg name="controllers" default="EffortJointInterface_J1_controller EffortJointInterface_J2_controller EffortJointInterface_J3_controller EffortJointInterface_J4_controller EffortJointInterface_J5_controller EffortJointInterface_J6_controller EffortJointInterface_J7_controller joint_state_controller"/>
+    <arg name="hardware_interface" default="EffortJointController"/>
+    <arg name="controllers" default="PositionJointInterface_J1_controller PositionJointInterface_J2_controller PositionJointInterface_J3_controller PositionJointInterface_J4_controller PositionJointInterface_J5_controller PositionJointInterface_J6_controller PositionJointInterface_J7_controller joint_state_controller"/>
     <arg name="robot_name" default="iiwa" />
     <arg name="model" default="iiwa7" />
     <arg name="joint_state_frequency" default="100" />
     <arg name="robot_state_frequency" default="100" />
-    <arg name="controller_spawner" default="controller_spawner"/>
-    <arg name="state_publisher" default="robot_state_publisher"/>
     
     <!-- Loads joint controller configurations from YAML file to parameter server -->
     <rosparam file="$(find iiwa_control)/config/$(arg robot_name)_control_simple.yaml" command="load" />
     <param name="/$(arg robot_name)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
     
     <!-- Loads the controllers -->
-    <node name="$(arg controller_spawner)" pkg="controller_manager" type="spawner" respawn="false"
-          output="screen" args="$(arg controllers)" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" ns="/iiwa" args="$(arg controllers)" />
     
     <!-- Converts joint states to TF transforms for rviz, etc -->
-    <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
           respawn="false" output="screen">
         <remap from="joint_states" to="/$(arg robot_name)/joint_states" />
         <param name="publish_frequency" value="$(arg robot_state_frequency)" />
