@@ -16,6 +16,7 @@
     <arg name="robot_name2" default="iiwa2" />
     <arg name="model" default="iiwa14"/>
     <arg name="trajectory" default="true"/>
+    <arg name="two_robots" default="false"/>
     
     <!-- Loads the Gazebo world. -->
     <include file="$(find iiwa_gazebo)/launch/iiwa_world.launch">
@@ -26,11 +27,10 @@
 
     <!-- Spawn controllers - it uses a JointTrajectoryController -->
     <group  ns="$(arg robot_name)" if="$(arg trajectory)">
-        
+       
       
         <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
         <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
-        <!--<include file="$(find iiwa_description)/launch/$(arg model)_tool_upload.launch">-->
             <arg name="hardware_interface" value="$(arg hardware_interface)"/>
         </include>
         <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
@@ -49,15 +49,15 @@
     <group  ns="$(arg robot_name2)" if="$(arg trajectory)">
 
         <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
-        <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
+        <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch" if="$(arg two_robots)">
             <arg name="hardware_interface" value="$(arg hardware_interface)"/>
             <arg name="robot_name" value="$(arg robot_name2)"/>
         </include>
         <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
         <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model $(arg robot_name2) -x 0.0 -y -1.53 -z 0.165 -param robot_description"/>
+              args="-urdf -model $(arg robot_name2) -x 0.0 -y -1.53 -z 0.165 -param robot_description" if="$(arg two_robots)"/>
         
-        <include file="$(find iiwa_control)/launch/iiwa_control.launch">
+        <include file="$(find iiwa_control)/launch/iiwa_control.launch" if="$(arg two_robots)">
             <arg name="hardware_interface" value="$(arg hardware_interface)" />
             <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_trajectory_controller" />
             <arg name="robot_name" value="$(arg robot_name2)" />

@@ -11,7 +11,7 @@
     <!-- |    controllers for the single joints, using the "trajectory" argument.            | -->
     <!-- ===================================================================================== -->
     
-    <arg name="hardware_interface" default="PositionJointInterface" />
+    <arg name="hardware_interface" default="EffortJointInterface" />
     <arg name="robot_name" default="iiwa" />
     <arg name="robot_name2" default="iiwa2" />
     <arg name="model" default="iiwa14"/>
@@ -29,7 +29,8 @@
         
       
         <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
-        <include file="$(find iiwa_description)/launch/iiwa14_tool_upload.launch">
+        <!--<include file="$(find iiwa_description)/launch/iiwa14_tool_upload.launch">-->
+        <include file="$(find iiwa_description)/launch/iiwa14_upload.launch">
             <arg name="hardware_interface" value="$(arg hardware_interface)"/>
         </include>
         <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
@@ -38,14 +39,15 @@
 
         <include file="$(find iiwa_control)/launch/iiwa_control.launch">
             <arg name="hardware_interface" value="$(arg hardware_interface)" />
-            <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_trajectory_controller" />
+            <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_J1_controller $(arg hardware_interface)_J2_controller" />
             <arg name="robot_name" value="$(arg robot_name)" />
             <arg name="model" value="$(arg model)" />
         </include>
         
     </group>
 
-    <group  ns="$(arg robot_name2)" if="$(arg trajectory)">
+    <!--<group  ns="$(arg robot_name2)" if="$(arg trajectory)">-->
+    <group  ns="$(arg robot_name)" if="false">
 
         <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
         <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
