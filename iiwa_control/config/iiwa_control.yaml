@@ -7,7 +7,7 @@
   # Controllers for singular joint ------------------------------------
   # 
   # Effort Position Controllers ---------------------------------------
-  
+
   # VALUES ARE NOT CORRECT !
   EffortJointInterface_J1_controller:
     type: effort_controllers/JointPositionController
@@ -146,6 +146,16 @@
       - iiwa_joint_6
       - iiwa_joint_7
 
+    # VALUES ARE NOT CORRECT !
+    gains:
+      iiwa_joint_1: {p: 500,  d: 30, i: 15, i_clamp: 30}
+      iiwa_joint_2: {p: 200,  d: 10, i: 10, i_clamp: 30}
+      iiwa_joint_3: {p: 65,  d: 10, i: 15, i_clamp: 30}
+      iiwa_joint_4: {p: 31,  d: 7, i: 12, i_clamp: 30}
+      iiwa_joint_5: {p: 23,  d: 3, i: 5, i_clamp: 30}
+      iiwa_joint_6: {p: 13,  d: 3, i: 3, i_clamp: 30}
+      iiwa_joint_7: {p: 17,  d: 2, i: 2.5, i_clamp: 10}
+
     constraints:
       goal_time: 0.5                   # Override default
 
@@ -181,7 +191,4 @@
     state_publish_rate:  25            # Override default
     action_monitor_rate: 30            # Override default
     stop_trajectory_duration: 0        # Override default
-
-
-
 

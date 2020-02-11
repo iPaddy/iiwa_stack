@@ -11,7 +11,7 @@
     <arg name="debug" default="false"/>
     <arg name="hardware_interface" default="PositionJointInterface"/>
     <arg name="robot_name" default="iiwa" />
-    <arg name="robot_name2" default="iiwa2" />
+    <!-- <arg name="robot_name2" default="iiwa2" /> -->
     <arg name="model" default="iiwa14"/>
     
     <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
