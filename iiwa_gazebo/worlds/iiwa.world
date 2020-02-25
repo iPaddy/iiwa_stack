@@ -14,7 +14,7 @@
       <uri>model://sun</uri>
     </include>
 
-    <!-- <include>
+    <include>
       <uri>model://frame</uri>
     </include>
 
@@ -24,7 +24,7 @@
 
     <include>
       <uri>model://puck</uri>
-    </include> -->
+    </include>
 
     <gravity>0 0 -9.81</gravity>
 
