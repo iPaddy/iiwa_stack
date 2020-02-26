@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
+  <!-- set default parameters -->
 	<arg name="hardware_interface" default="PositionJointInterface" />
     <arg name="robot_ns" default="iiwa" />
     <arg name="robot_ns2" default="iiwa2" />
@@ -10,7 +11,6 @@
     <arg name="controllers" default="joint_state_controller PositionJointInterface_trajectory_controller"/>
     <arg name="state_publisher" default="robot_state_publisher"/>
 
-
     <!-- Loads the Gazebo world. -->
     <include file="$(find iiwa_gazebo)/launch/iiwa_world.launch">
     	<arg name="paused" value="false"/>
@@ -18,14 +18,13 @@
     	<arg name="robot_name" value="$(arg robot_ns)"/>
     	<arg name="model" value="$(arg model)"/>
     </include>
-
     
+    <!-- spawn first robot with controller -->
     <group ns="$(arg robot_ns)">
     	<rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
 
 	    <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
 	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
-	    	<!-- <arg name="robot_name" value="$(arg robot_ns)" /> -->
 	    </include>
     	
     	<param name="/$(arg robot_ns)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
@@ -38,19 +37,16 @@
 
         <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
           respawn="false" output="screen">
-        	<!-- <remap from="joint_states" to="/$(arg robot_name)/joint_states" /> -->
         	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
     	</node> 
- 
     </group>
-
     
+    <!-- spawn second robot with controller -->
     <group ns="$(arg robot_ns2)">
 	    <rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
 
 	    <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
 	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
-	    	<!-- <arg name="robot_name" value="$(arg robot_ns2)" /> -->
 	    </include>
 
     	<param name="/$(arg robot_ns2)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
@@ -63,10 +59,8 @@
 
         <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
           respawn="false" output="screen">
-        	<!-- <remap from="joint_states" to="/$(arg robot_name)/joint_states" /> -->
         	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
     	</node> 
     </group>
-
 	
 </launch>
