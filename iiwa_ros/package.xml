@@ -12,5 +12,6 @@
 
   <depend>roscpp</depend>
   <depend>iiwa_msgs</depend>
-  
+  <depend>kdl_parser</depend>
+
 </package>
