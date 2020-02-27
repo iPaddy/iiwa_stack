@@ -9,9 +9,12 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
   rospy
-  std_msgs
-  genmsg
   kdl_parser
+  std_msgs
+  actionlib
+  trajectory_msgs
+  control_msgs
+  sensor_msgs
 )
 
 catkin_package(
@@ -55,6 +58,18 @@ target_link_libraries(iiwa_ros_test ${PROJECT_NAME})
 add_executable(iiwa_ros_ctrl scripts/kdl_tools.cpp)
 target_include_directories(iiwa_ros_ctrl PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(iiwa_ros_ctrl ${PROJECT_NAME})
+
+add_executable(iiwa_ros_pub_cmd scripts/trajectory_pub.cpp)
+target_include_directories(iiwa_ros_pub_cmd PUBLIC include ${catkin_INCLUDE_DIRS})
+target_link_libraries(iiwa_ros_pub_cmd ${PROJECT_NAME})
+
+add_executable(iiwa_ros_sub scripts/simple_sub.cpp)
+target_include_directories(iiwa_ros_sub PUBLIC include ${catkin_INCLUDE_DIRS})
+target_link_libraries(iiwa_ros_sub ${PROJECT_NAME})
+
+add_executable(iiwa_ros_pub scripts/simple_pub.cpp)
+target_include_directories(iiwa_ros_pub PUBLIC include ${catkin_INCLUDE_DIRS})
+target_link_libraries(iiwa_ros_pub ${PROJECT_NAME})
 
 ## Add dependence to the iiwa_msg module for the library
 add_dependencies(${PROJECT_NAME} iiwa_msgs_generate_messages_cpp)

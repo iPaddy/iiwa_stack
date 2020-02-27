@@ -3,8 +3,8 @@
   <name>iiwa_ros</name>
   <version>1.4.0</version>
   <description>The iiwa_ros package</description>
-  <author email="salvo.virga@tum.de">Salvo Virga</author>
-  <maintainer email="salvo.virga@tum.de">Salvo Virga</maintainer>
+  <author email="plutz@mail.xyz">Patrick Lutz</author>
+  <maintainer email="plutz@mail.xyz">Patrick Lutz</maintainer>
 
   <license>BSD</license>
 
@@ -13,5 +13,9 @@
   <depend>roscpp</depend>
   <depend>iiwa_msgs</depend>
   <depend>kdl_parser</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>actionlib</depend>
+  <depend>control_msgs</depend>
+  <depend>sensor_msgs</depend>
 
 </package>
