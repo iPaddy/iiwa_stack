@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+
+<!-- Here we define the robot, we named it "iiwa14_tool" -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="iiwa14_striker">
+  
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find iiwa_description)/urdf/materials.xacro" />
+  <!--Import the iiwa14 macro -->
+  <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro"/>
+  
+  <!--  Arguments for the iiwa14 macro  -->
+  <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+  <xacro:arg name="robot_name" default="iiwa"/>
+  <xacro:arg name="origin_rpy" default="0 0 0"/>
+  <xacro:arg name="origin_xyz" default="0 0 0"/>
+  
+  <!--  Define the origin of your 3D space
+  Here we define a box lying at 0,0,0 with some dimensions, in reality our robot is place on top of a metal cart with those dimensions.
+  This will include the cart in the scene and avoid the robot to hit it when using MoveIt! 
+  If you don't want to have that you can define a basic world link (see commented lines)
+  -->
+  
+       <link name="world"/> 
+
+  <!--
+  <link name="world">
+    <visual>
+      <origin xyz="0 0 0.42" rpy="0 0 0"/>
+      <geometry>
+	<box size="0.68 0.605 0.84"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.42" rpy="0 0 0"/>
+      <geometry>
+	<box size="0.68 0.605 0.84"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <gazebo reference="world">
+    <static>true</static>
+  </gazebo>
+  -->
+  <!-- Here we insert an iiwa14 robot in the scene, it's origin is just on top of the box previously defined. You can use 0,0,0 if you don't have that. -->
+  <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="world">
+    <origin xyz="$(arg origin_xyz)" rpy="$(arg origin_rpy)" />
+  </xacro:iiwa14>
+  
+  <!-- Tool properties -->
+  <property name="tool_mass" value="0.200" />
+  <property name="tool_joint_offset" value="0.00 0.00 0.00" />
+  <property name="tool_link_offset" value="-0.16 0.0 0.0" />
+  
+  <!--  Here we define a dummy joint between the tip of the iiwa14 and the base of the tool. 
+  There is no offset between the two, that means the tool is attached at the robot flange. -->
+  <joint name="hand_joint" type="fixed">
+    <parent link="iiwa_link_ee" />
+    <child link = "hand_link" />
+    <origin xyz="${tool_joint_offset}" rpy="0 ${PI/2.0} ${-PI/2}" />  
+  </joint>
+  
+  <!-- Here we define the geometry of the tool. We designed the tool ourselves, so we have a mesh file that represents it.   
+  Else, one can define it using a geometric representation that approximate it, like a cylinder (see commented lines) -->
+  <link name="hand_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -1.571 0"/>
+      <geometry>
+        <mesh filename="package://iiwa_description/meshes/iiwa14_tool/visual/hand.stl"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://iiwa_description/meshes/iiwa14_tool/collision/hand.stl"/>
+      </geometry>
+      <material name="Grey"/>
+    </collision>
+  </link>
+  
+  <!-- joint between hand and striker, TODO should revolute but then striker dissapears-->
+  <joint name="hand_striker_joint" type="fixed">
+    <parent link="hand_link" />
+    <child link = "striker_ee" />
+    <origin xyz="${tool_link_offset}" rpy="0 0 0" />   
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" velocity="1000.0" />
+  </joint>
+  
+  <!--  The striker frame is here defined -->
+  <link name="striker_ee">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -1.571 0.785"/>
+      <geometry>
+        <mesh filename="package://iiwa_description/meshes/iiwa14_tool/visual/only_striker.stl"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 -1.571 0.785"/>
+      <geometry>
+        <mesh filename="package://iiwa_description/meshes/iiwa14_tool/collision/only_striker.stl"/>
+      </geometry>
+      <material name="Grey"/>
+    </collision>
+  </link>
+
+</robot> 

@@ -1,107 +1,69 @@
 <?xml version="1.0"?>
 <launch>
     
-    <!-- ===================================================================================== -->
-    <!-- |    Lauch file to start Gazebo with an IIWA using various controllers.	         | -->
-    
-    <!-- |    It allows to customize the name of the robot, for each robot                   | -->
-    <!-- |	  its topics will be under a nameespace with the same name as the robot's.       | -->
-    
-    <!-- |	  One can choose to have a joint trajectory controller or                        | -->
-    <!-- |    controllers for the single joints, using the "trajectory" argument.            | -->
-    <!-- ===================================================================================== -->
-    
-    <arg name="hardware_interface" default="EffortJointInterface" />
-    <arg name="robot_name" default="iiwa" />
-    <arg name="robot_name2" default="iiwa2" />
+    <arg name="hardware_interface" default="PositionJointInterface" />
+    <arg name="robot_ns" default="iiwa" />
+    <arg name="robot_ns2" default="iiwa2" />
     <arg name="model" default="iiwa14"/>
-    <arg name="trajectory" default="true"/>
+    <arg name="robot_state_frequency" default="100" />
+    <arg name="joint_state_frequency" default="100" />
+    <arg name="controllers" default="joint_state_controller PositionJointInterface_trajectory_controller"/>
+    <arg name="state_publisher" default="robot_state_publisher"/>
     
     <!-- Loads the Gazebo world. -->
     <include file="$(find iiwa_gazebo)/launch/iiwa_world.launch">
+        <arg name="paused" value="false"/>
         <arg name="hardware_interface" value="$(arg hardware_interface)" />
-        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="robot_name" value="$(arg robot_ns)" />
         <arg name="model" value="$(arg model)" />
     </include>
 
-    <!-- Spawn controllers - it uses a JointTrajectoryController -->
-    <group  ns="$(arg robot_name)" if="$(arg trajectory)">
-        
-      
-        <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
-        <!--<include file="$(find iiwa_description)/launch/iiwa14_tool_upload.launch">-->
-        <include file="$(find iiwa_description)/launch/iiwa14_upload.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)"/>
-        </include>
-        <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
-        <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model iiwa -x 0.0 -y 1.53 -z 0.165 -param robot_description"/>
+    <!--<group ns="$(arg robot_ns2)">
+    	<rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
 
-        <include file="$(find iiwa_control)/launch/iiwa_control.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)" />
-            <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_J1_controller $(arg hardware_interface)_J2_controller" />
-            <arg name="robot_name" value="$(arg robot_name)" />
-            <arg name="model" value="$(arg model)" />
-        </include>
-        
-    </group>
+	    <include file="$(find iiwa_description)/launch/$(arg model)_striker_upload.launch">
+	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
+        <arg name="origin_xyz" value="'0 1.53 0.165'"/>
+        <arg name="origin_rpy" value="'0 0 -1.571'"/>
+	    </include>
+    	
+    	<param name="/$(arg robot_ns)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
 
-    <!--<group  ns="$(arg robot_name2)" if="$(arg trajectory)">-->
-    <group  ns="$(arg robot_name)" if="false">
+	    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+	          args="-urdf -model $(arg robot_ns) -param robot_description"/>
 
-        <!-- Load the URDF with the given hardware interface into the ROS Parameter Server -->
-        <include file="$(find iiwa_description)/launch/$(arg model)_upload.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)"/>
-            <arg name="robot_name" value="$(arg robot_name2)"/>
-        </include>
-        <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
-        <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model $(arg robot_name2) -x 0.0 -y -1.53 -z 0.165 -param robot_description"/>
-        
-        <include file="$(find iiwa_control)/launch/iiwa_control.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)" />
-            <arg name="controllers" value="joint_state_controller $(arg hardware_interface)_trajectory_controller" />
-            <arg name="robot_name" value="$(arg robot_name2)" />
-            <arg name="model" value="$(arg model)" />
-        </include>
-        
-    </group>
+	    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" args="$(arg controllers)" />
+
+        <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
+          respawn="false" output="screen">
+        	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
+          <param name="tf_prefix" value="$(arg robot_ns)"/>
+    	</node> 
+    </group>-->
     
-    <!-- Spawn controllers - it uses an Effort Controller for each joint -->
-    <group ns="$(arg robot_name)" unless="$(arg trajectory)">
-        
-        <include file="$(find iiwa_control)/launch/iiwa_control.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)" />
-            <arg name="controllers" value="joint_state_controller
-                 $(arg hardware_interface)_J1_controller
-                 $(arg hardware_interface)_J2_controller
-                 $(arg hardware_interface)_J3_controller
-                 $(arg hardware_interface)_J4_controller
-                 $(arg hardware_interface)_J5_controller
-                 $(arg hardware_interface)_J6_controller
-                 $(arg hardware_interface)_J7_controller"/>
-            <arg name="robot_name" value="$(arg robot_name)" />
-            <arg name="model" value="$(arg model)" />
-        </include>
-        
-    </group>
+    <!-- spawn second robot with controller -->
+    <group ns="$(arg robot_ns)">
+	    <rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
 
-    <group ns="$(arg robot_name2)" unless="$(arg trajectory)">
-        
-        <include file="$(find iiwa_control)/launch/iiwa_control.launch">
-            <arg name="hardware_interface" value="$(arg hardware_interface)" />
-            <arg name="controllers" value="joint_state_controller
-                 $(arg hardware_interface)_J1_controller
-                 $(arg hardware_interface)_J2_controller
-                 $(arg hardware_interface)_J3_controller
-                 $(arg hardware_interface)_J4_controller
-                 $(arg hardware_interface)_J5_controller
-                 $(arg hardware_interface)_J6_controller
-                 $(arg hardware_interface)_J7_controller"/>
-            <arg name="robot_name" value="$(arg robot_name2)" />
-            <arg name="model" value="$(arg model)" />
-        </include>
-        
+	    <include file="$(find iiwa_description)/launch/$(arg model)_striker_upload.launch">
+	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
+        <arg name="origin_xyz" value="'0 -1.53 0.165'"/>
+        <arg name="origin_rpy" value="'0 0 1.571'"/>
+	    </include>
+
+    	<param name="/$(arg robot_ns2)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
+
+	    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+	          args="-urdf -model $(arg robot_ns2) -param robot_description"/>
+
+	    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" args="$(arg controllers)" />
+
+        <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
+          respawn="false" output="screen">
+        	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
+          <!--<param name="tf_prefix" value="$(arg robot_ns2)"/>-->
+    	</node> 
     </group>
-    
 </launch>
