@@ -7,7 +7,8 @@
     <arg name="model" default="iiwa14"/>
     <arg name="robot_state_frequency" default="100" />
     <arg name="joint_state_frequency" default="100" />
-    <arg name="controllers" default="joint_state_controller PositionJointInterface_trajectory_controller"/>
+    <!--<arg name="controllers" default="joint_state_controller PositionJointInterface_trajectory_controller"/>-->
+    <arg name="controllers" default="joint_state_controller PositionJointInterface_J1_controller PositionJointInterface_J2_controller PositionJointInterface_J3_controller PositionJointInterface_J4_controller PositionJointInterface_J5_controller PositionJointInterface_J6_controller PositionJointInterface_J7_controller"/>
     <arg name="state_publisher" default="robot_state_publisher"/>
     
     <!-- Loads the Gazebo world. -->
@@ -44,7 +45,7 @@
     
     <!-- spawn second robot with controller -->
     <group ns="$(arg robot_ns)">
-	    <rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
+	    <rosparam file="$(find iiwa_control)/config/iiwa_control_simple.yaml" command="load"/>
 
 	    <include file="$(find iiwa_description)/launch/$(arg model)_striker_upload.launch">
 	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
