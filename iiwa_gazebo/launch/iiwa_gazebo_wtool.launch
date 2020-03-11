@@ -8,7 +8,8 @@
     <arg name="robot_state_frequency" default="100" />
     <arg name="joint_state_frequency" default="100" />
     <!--<arg name="controllers" default="joint_state_controller PositionJointInterface_trajectory_controller"/>-->
-    <arg name="controllers" default="joint_state_controller PositionJointInterface_J1_controller PositionJointInterface_J2_controller PositionJointInterface_J3_controller PositionJointInterface_J4_controller PositionJointInterface_J5_controller PositionJointInterface_J6_controller PositionJointInterface_J7_controller"/>
+    <arg name="controllers" default="joint_state_controller JointGroupPositionInterface_controller"/>
+    <!--<arg name="controllers" default="joint_state_controller PositionJointInterface_J1_controller PositionJointInterface_J2_controller PositionJointInterface_J3_controller PositionJointInterface_J4_controller PositionJointInterface_J5_controller PositionJointInterface_J6_controller PositionJointInterface_J7_controller"/>-->
     <arg name="state_publisher" default="robot_state_publisher"/>
     
     <!-- Loads the Gazebo world. -->
@@ -19,31 +20,7 @@
         <arg name="model" value="$(arg model)" />
     </include>
 
-    <!--<group ns="$(arg robot_ns2)">
-    	<rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
-
-	    <include file="$(find iiwa_description)/launch/$(arg model)_striker_upload.launch">
-	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
-        <arg name="origin_xyz" value="'0 1.53 0.165'"/>
-        <arg name="origin_rpy" value="'0 0 -1.571'"/>
-	    </include>
-    	
-    	<param name="/$(arg robot_ns)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
-
-	    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-	          args="-urdf -model $(arg robot_ns) -param robot_description"/>
-
-	    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-          output="screen" args="$(arg controllers)" />
-
-        <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
-          respawn="false" output="screen">
-        	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
-          <param name="tf_prefix" value="$(arg robot_ns)"/>
-    	</node> 
-    </group>-->
     
-    <!-- spawn second robot with controller -->
     <group ns="$(arg robot_ns)">
 	    <rosparam file="$(find iiwa_control)/config/iiwa_control_simple.yaml" command="load"/>
 
@@ -67,4 +44,28 @@
           <!--<param name="tf_prefix" value="$(arg robot_ns2)"/>-->
     	</node> 
     </group>
+    <!-- spawn second robot with controller -->
+    <!--<group ns="$(arg robot_ns2)">
+    	<rosparam file="$(find iiwa_control)/config/iiwa_control.yaml" command="load"/>
+
+	    <include file="$(find iiwa_description)/launch/$(arg model)_striker_upload.launch">
+	    	<arg name="hardware_interface" value="$(arg hardware_interface)"/>
+        <arg name="origin_xyz" value="'0 1.53 0.165'"/>
+        <arg name="origin_rpy" value="'0 0 -1.571'"/>
+	    </include>
+    	
+    	<param name="/$(arg robot_ns)/joint_state_controller/publish_rate" value="$(arg joint_state_frequency)" />
+
+	    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+	          args="-urdf -model $(arg robot_ns) -param robot_description"/>
+
+	    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" args="$(arg controllers)" />
+
+        <node name="$(arg state_publisher)" pkg="robot_state_publisher" type="robot_state_publisher"
+          respawn="false" output="screen">
+        	<param name="publish_frequency" value="$(arg robot_state_frequency)" />
+          <param name="tf_prefix" value="$(arg robot_ns)"/>
+    	</node> 
+    </group>-->
 </launch>

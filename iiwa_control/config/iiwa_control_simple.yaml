@@ -4,32 +4,14 @@
     type: joint_state_controller/JointStateController
     publish_rate: 50  
   
-  # Forward Position Controllers ---------------------------------------
-  PositionJointInterface_J1_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_1
-
-  PositionJointInterface_J2_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_2
-    
-  PositionJointInterface_J3_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_3
-    
-  PositionJointInterface_J4_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_4
-    
-  PositionJointInterface_J5_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_5
-    
-  PositionJointInterface_J6_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_6
-    
-  PositionJointInterface_J7_controller:
-    type: position_controllers/JointPositionController
-    joint: iiwa_joint_7
-
+  # Position Controllers ---------------------------------------
+  JointGroupPositionInterface_controller:
+    type: position_controllers/JointGroupPositionController
+    joints:
+    - iiwa_joint_1
+    - iiwa_joint_2
+    - iiwa_joint_3
+    - iiwa_joint_4
+    - iiwa_joint_5
+    - iiwa_joint_6
+    - iiwa_joint_7
