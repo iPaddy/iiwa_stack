@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <math.h>
 
-#include <hermite_cubic.hpp>
+#include <chrono> // for timing debugging
 
 #include <kdl_parser/kdl_parser.hpp> //kdl from param server
 #include <kdl/chainfksolverpos_recursive.hpp> // ForwardKinematic solver
@@ -33,25 +33,30 @@ public:
     // Publish for iiwa joint angles
     pub = nh.advertise<std_msgs::Float64MultiArray>("iiwa/JointGroupPositionInterface_controller/command",1);
 
+    // initialize joints as msg for sending to command the iiwa
     joints.layout.dim.resize(1);
     joints.layout.dim[0].size = 7;
+
+    // Mapping joints to numbers for use in receiving the joint msgs
     j_map = {
-                                                {0,"iiwa_joint_1"},
-                                                {1,"iiwa_joint_2"},
-                                                {2,"iiwa_joint_3"},
-                                                {3,"iiwa_joint_4"},
-                                                {4,"iiwa_joint_5"},
-                                                {5,"iiwa_joint_6"},
-                                                {6,"iiwa_joint_7"},
+            {0,"iiwa_joint_1"},
+            {1,"iiwa_joint_2"},
+            {2,"iiwa_joint_3"},
+            {3,"iiwa_joint_4"},
+            {4,"iiwa_joint_5"},
+            {5,"iiwa_joint_6"},
+            {6,"iiwa_joint_7"},
     };
-
-    KDL::Vector goal_pos(0, 0.97, 0.17);
-
+    state_map = { {0, "init"}, {1, "reset"}, {2, "strike"} }
 }
   ~IiwaKinematics(){
   }
 
-  bool initial(const std::string param){
+  bool initial(const std::string param, float rate){
+    timestep = 1 / rate;
+    prev_ee_pos = KDL::Vector(0.0,0.0,0.0);
+    prev_puck_pos = KDL::Vector(0.0, 0.0, 0.0);
+
     subscribed_joints = 0;
     subscribed_puck = 0;
     // create kdl tree from parameter server for both robots if possible
@@ -71,48 +76,39 @@ public:
     q_cur = KDL::JntArray(nj);
     q_dot = KDL::JntArray(nj);
     q_aim = KDL::JntArray(nj);
-    q_min = KDL::JntArray(nj);
-    q_max = KDL::JntArray(nj);
-    q_dot_max = KDL::JntArray(nj);
+    //q_min = KDL::JntArray(nj);
+    //q_max = KDL::JntArray(nj);
+    //q_dot_max = KDL::JntArray(nj);
     q_dot_aim = KDL::JntArray(nj);
 
     KDL::Vector vel_aim(10, 10, 0.0);
     KDL::Vector rot_(0.0, 0.0, 0.0);
     KDL::Twist vel_full_aim(vel_aim, rot_);
-    // output info on the kdl tree
 
-    q_max.data(0) = -2.93;
-    q_max.data(1) = -2.06;
-    q_max.data(2) = -2.93;
-    q_max.data(3) = -2.06;
-    q_max.data(4) = -2.93;
-    q_max.data(5) = -2.06;
-    q_max.data(6) = -3.02;
+    //q_max.data(0) = -2.93; //q_min.data(0) = 2.93; //q_dot_max.data(0) = 100.0;
+    //q_max.data(1) = -2.06; //q_min.data(1) = 2.06; //q_dot_max.data(1) = 100.0;
+    //q_max.data(2) = -2.93; //q_min.data(2) = 2.93; //q_dot_max.data(2) = 100.0;
+    //q_max.data(3) = -2.06; //q_min.data(3) = 2.06; //q_dot_max.data(3) = 100.0;
+    //q_max.data(4) = -2.93; //q_min.data(4) = 2.93; //q_dot_max.data(4) = 100.0;
+    //q_max.data(5) = -2.06; //q_min.data(5) = 2.06; //q_dot_max.data(5) = 100.0;
+    //q_max.data(6) = -3.02; //q_min.data(6) = 3.02; //q_dot_max.data(6) = 100.0;
 
-    q_min.data(0) = 2.93;
-    q_min.data(1) = 2.06;
-    q_min.data(2) = 2.93;
-    q_min.data(3) = 2.06;
-    q_min.data(4) = 2.93;
-    q_min.data(5) = 2.06;
-    q_min.data(6) = 3.02;
-
-    q_dot_max.data(0) = 100.0;
-    q_dot_max.data(1) = 100.0;
-    q_dot_max.data(2) = 100.0;
-    q_dot_max.data(3) = 100.0;
-    q_dot_max.data(4) = 100.0;
-    q_dot_max.data(5) = 100.0;
-    q_dot_max.data(6) = 100.0;
-
-    pos_aim.p(0) = 0.0;
-    pos_aim.p(1) = -0.9;
-    pos_aim.p(2) = 0.18;
+    // init of the robot position
+    KDL::Vector goal_pos(0.0, -0.9, 0.175);
+    pos_aim.p(0) = goal_pos[0];
+    pos_aim.p(1) = goal_pos[1];
+    pos_aim.p(2) = goal_pos[2];
     rot_aim.M = KDL::Rotation(0.0,0.0,1.0,
                               -0.707, -0.707, 0.0,
                               0.707,-0.707,0.0);
 
+    // max reach with end effector in right rotation (0.0, -0.55, 0.17)
+    KDL::Vector reach_pos(0.0,-0.55, 0.17);
+    iiwa_pos = { 0.0,-1.53, 0.165 };
+    max_reach_dist = (iiwa_pos - reach_pos).Norm();
+    puck_to_goal_angle();
   }
+
   void reachedInitPos(){
     // calculate distance between pos_aim and pos and if it is within threshold return true
     if(reached_init==true){
@@ -121,9 +117,9 @@ public:
 
     fkSolver();
     double dist_to_aim = (pos.p - pos_aim.p).Norm();
-    ROS_INFO_STREAM("distance to init position is: " << dist_to_aim);
-    ROS_INFO_STREAM("position pos : " << pos.p);
-    ROS_INFO_STREAM("position pos_aim : " << pos_aim.p);
+    //ROS_INFO_STREAM("distance to init position is: " << dist_to_aim);
+    //ROS_INFO_STREAM("position pos : " << pos.p);
+    //ROS_INFO_STREAM("position pos_aim : " << pos_aim.p);
     if(dist_to_aim < 0.01){
       ROS_INFO_STREAM("reached init position");
       reached_init = true;
@@ -140,9 +136,9 @@ public:
     fkSolver();
 
     double dist_to_aim = (pos.p - pos_aim.p ).Norm();
-    ROS_INFO_STREAM("distance to aim is: " << dist_to_aim);
+    //ROS_INFO_STREAM("distance to aim is: " << dist_to_aim);
     if(dist_to_aim < 0.01){
-      ROS_INFO_STREAM("reached aim");
+      //ROS_INFO_STREAM("reached aim");
       return true;
     }
     else
@@ -177,6 +173,7 @@ public:
     }
     subscribed_joints = true;
   }
+
   void assignJoints(){
     // Assign some values to the joint positions
     for(unsigned int i=0;i<nj;i++){
@@ -186,6 +183,7 @@ public:
       q_cur.data(i)=(double)myinput;
     }
   }
+
   void assignAimPos(){
     // Assign some values to the joint positions
     for(unsigned int i=0;i<3;i++){
@@ -202,41 +200,113 @@ public:
       pos_aim.p(i)=(double)myinput;
     }
   }
+
   void puck_to_goal_angle(){
     // calculates the angle to hit the puck for it to got towards the opponents goal
     // angle is 0 if puck has to be hit straight forward (along y axis)
     KDL::Vector diff = goal_pos - puck_pos;
     //ROS_INFO_STREAM("Goal - puck: " << goal_pos - puck_pos );
 
-    float goal_angle = atan2(diff[0],diff[1]);
-    ROS_INFO_STREAM("Goal angle: " << goal_angle );
+    // TODO look into angle getting too big - should max out going towards PI/2
+    // getting angle between y axis and point
+    goal_angle = atan2(diff[0],diff[1]);
+    //ROS_INFO_STREAM("Goal angle: " << goal_angle );
 
   }
+
+  void direct_to_puck_traj(){
+    //calculate intermediate points between two given points
+    // given 1 second 50 points between the current ee position and the puck are calculated
+    float time = 1; // secs
+    int steps = int(time/timestep);
+    // get distance from start to puck and divide by number of steps for each increase - linear interpolation
+    KDL::Vector diff = puck_pos - pos.p;
+    KDL::Vector start_pos = pos.p;
+    float incr_x = diff[0] / steps;
+    float incr_y = diff[1] / steps;
+    ROS_INFO_STREAM("starting trajectory pushing, with steps: " << steps);
+    for(int i = 0; i < steps; i++){
+      traj.push_back(KDL::Vector(start_pos[0] + incr_x*i, start_pos[1] + incr_y*i, 0.175 ));
+      ROS_INFO_STREAM("pushed trajectory point: x: " << start_pos[0] + incr_x * i << " y: " << start_pos[1] + incr_y * i);
+    }
+  }
+  //void update_velocities(){
+  //puck_vel = puck_pos - ;
+  //ee_vel;
+  //}
+
+  void traj_to_puck(float duration, float velocity){
+    // calculate intermediate points for trajectory from current position to puck
+    // solving cubic polynomial with boundary conditions f(0),f(T),f_dot(0) and f_dot(T)
+    // f(t) = at^3 + bt^2 + ct + d
+    // f(0) - starting position => d = [x_0, y_0]
+    // f_dot(0) - starting velocity => c = [x_dot_0, y_dot_0]
+    // TODO get current velocity for striker and puck
+    // TODO parametrize 50 for frequency
+    int steps = int(duration/50);
+
+    KDL::Vector diff = puck_pos - pos.p;
+      //traj.push_back(KDL::Vector(diff[0] + incr * i, diff[1] + incr * i, 0.175));
+  }
+
+  void follow_traj_point(){
+    for (int i = 0; i < 3; i++)
+    {
+      pos_aim.p.data[i] = traj.front()[i];
+    }
+    traj.erase(traj.begin());
+    updateAimPos();
+  }
+
   void hitPuck(){
     // check if puck is in reachable area
+    if((puck_pos - iiwa_pos).Norm() < max_reach_dist){
+      // write hitting here
+      ROS_INFO_STREAM("Puck reachable: " << (puck_pos - iiwa_pos).Norm());
+      //calc_traj(puck_pos);
 
-    // use goal_angle
+      // follow basic interpolated trajectory
+      if(traj.size() <= 0){
+        direct_to_puck_traj();
+      }
+      follow_traj_point();
+      ROS_INFO_STREAM("number of trajectory points left: " << traj.size());
 
-    // set velocity for hitting
+      // TODO use goal_angle
+      // TODO set velocity for hitting
+    }
+    else{
+      ROS_INFO_STREAM("Puck is not reachable with robot");
+      return;
+    }
   }
+
+  void calc_traj(KDL::Vector puck_pos){
+    // solve trajectory by solving cubic hermite spline with boundary conditions of current position, end position, and the velocities at each point
+  }
+
   void updateAimPos(){
+    // update the current aimed for position - overwriting the rotation to be fixed
+    // TODO check if rotational freedom of yaw can stay variable
     pos_aim.M = rot_aim.M;
 
+    // inverse kinematics solver giving the corresponding joint angles for a given cartesian position
     ikSolver();
 
-    // test if this works fine
     joints.data.resize(7);
     joints.data = {q_aim.data[0], q_aim.data[1], q_aim.data[2], q_aim.data[3], q_aim.data[4], q_aim.data[5], q_aim.data[6]};
 
   }
+
   void ikSolver(){
-      iksolver = new KDL::ChainIkSolverPos_LMA(chain);
-      inv_kinematics_status = iksolver->CartToJnt(q_cur,pos_aim,q_aim);
-      if(inv_kinematics_status>=0){
-      }else{
-        printf("%s \n","Error: could not calculate inverse kinematics :(");
-      }
+    iksolver = new KDL::ChainIkSolverPos_LMA(chain);
+    inv_kinematics_status = iksolver->CartToJnt(q_cur,pos_aim,q_aim);
+    if(inv_kinematics_status>=0){
+    }else{
+      printf("%s \n","Error: could not calculate inverse kinematics :(");
     }
+  }
+
   void fkSolver(){
     // create solver based on kinematic tree
     fksolver = new KDL::ChainFkSolverPos_recursive(chain);
@@ -247,6 +317,7 @@ public:
       printf("%s \n","Error: could not calculate forward kinematics :(");
     }
   }
+
   void ikSolverVel(){
     iksolvervel = new KDL::ChainIkSolverVel_wdls(chain);
 
@@ -255,12 +326,26 @@ public:
     }else{
       printf("%s \n","Error: could not calculate joint velocities :(");
     }
+  }
+  void updateParams(){
+    // save a velocity value by storing previous position
+    puck_vel = (puck_pos - prev_puck_pos)/timestep;
+    ee_vel = (pos.p - prev_ee_pos)/timestep;
+    prev_ee_pos = pos.p;
+    prev_puck_pos = puck_pos;
+    //prev_ee_pos = ;
 
   }
 
   void mainCallback(){
-    // publish joint angles to robot
-    pub.publish(joints);
+    // time events
+    using std::chrono::duration_cast;
+    using std::chrono::nanoseconds;
+    typedef std::chrono::high_resolution_clock clock;
+    auto start = clock::now();
+
+    // update velocities
+    updateParams();
     // update cartesian position given the joint angles
     fkSolver();
 
@@ -274,11 +359,25 @@ public:
     }
     // main loop for getting a new aim and updating accordingly
     if(reached_init==true && reachedAim() ){
-      ROS_INFO_STREAM("moving to next aim");
-      assignAimPos();
-      updateAimPos();
+      //ROS_INFO_STREAM("moving to next aim");
+      // TODO some procedure here for getting the next command
+      //assignAimPos();
+      //updateAimPos();
     }
+    // set trajectory and push to next aim
     hitPuck();
+
+    // publish joint angles to robot
+    pub.publish(joints);
+    auto end = clock::now();
+
+    // assuming a maximum duration of about 600000 ns leaving room for the 0.02 sec > 2,000,000ns 
+    if (2000000 < duration_cast<nanoseconds>(end - start).count()){
+        ROS_INFO_STREAM("taking to long for 50Hz");
+      }
+      else{
+        ROS_INFO_STREAM("taking: " << duration_cast<nanoseconds>(end - start).count() << "ns/n thus trying another step");
+      }
   }
 
 private:
@@ -288,23 +387,27 @@ private:
   KDL::Tree tree;
   KDL::Chain chain;
   std::string robot_desc_string;
-  //control_msgs::FollowJointTrajectoryGoal point;
   std_msgs::Float64MultiArray joints;
   unsigned int nj; // number of joints
-  std::unordered_map<int,std::string> j_map;
+  std::unordered_map<int,std::string> j_map, state_map;
   KDL::JntArray q_cur, q_init, q_dot, q_max, q_min, q_aim; // all joint values from current, initial, velocity, min and max angles and aim
   KDL::ChainIkSolverPos_LMA *iksolver;
   KDL::ChainIkSolverVel_wdls *iksolvervel;
   KDL::ChainFkSolverPos_recursive *fksolver;
   KDL::JntArray q_dot_max, q_dot_aim; // maximum joint velocity
   KDL::Frame pos, pos_aim, rot_aim; // Create the frame that will contain the results
-  KDL::Vector goal_pos, puck_pos; // endefector positions for both robots
+  KDL::Vector goal_pos, puck_pos, reach_pos, iiwa_pos, ee_vel, puck_vel; // endefector positions for both robots
+  double max_reach_dist;
   bool kinematics_status, inv_kinematics_status, reached_init, vel_status;
   KDL::Twist vel_full_aim;
   KDL::Vector vel_aim;
-
+  float goal_angle;
+  std::vector<KDL::Vector> traj; // array for positions to go to
 public:
+  int steps;
   bool subscribed_puck,subscribed_joints;
+  KDL::Vector prev_puck_pos, prev_ee_pos;
+  float timestep;
 
 };
 
@@ -313,11 +416,13 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "kinematics");
   IiwaKinematics IiwaKinematics;
 
-  ros::Rate r(100);
+  float frequency = 50.;
+  ros::Rate r(frequency);
   std::string robotParam = "robot_description";
 
-  if(IiwaKinematics.initial(robotParam)){
-  ROS_INFO_STREAM("initial success");
+  if (IiwaKinematics.initial(robotParam, frequency))
+  {
+    ROS_INFO_STREAM("initial success");
   }
 
   while(ros::ok()){
