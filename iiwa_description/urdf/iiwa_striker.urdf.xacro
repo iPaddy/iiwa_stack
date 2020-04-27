@@ -103,6 +103,19 @@
         <mesh filename="package://iiwa_description/meshes/iiwa14_tool/collision/only_striker.stl"/>
       </geometry>
       <material name="Grey"/>
+      <surface>
+          <bounce>
+              <restitution_coefficient>1</restitution_coefficient>
+          </bounce>
+          <contact>
+              <ode>
+                  <soft_cfm>0.1</soft_cfm>
+                  <soft_erp>0.1</soft_erp>
+                  <max_vel>1</max_vel>
+              </ode>
+          </contact>
+      </surface>
+
     </collision>
   </link>
 
