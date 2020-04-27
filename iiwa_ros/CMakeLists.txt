@@ -59,6 +59,10 @@ add_executable(iiwa_ros_ctrl scripts/kdl_tools.cpp)
 target_include_directories(iiwa_ros_ctrl PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(iiwa_ros_ctrl ${PROJECT_NAME})
 
+add_executable(reset_puck scripts/reset_puck.cpp)
+target_include_directories(reset_puck PUBLIC include ${catkin_INCLUDE_DIRS})
+target_link_libraries(reset_puck ${PROJECT_NAME})
+
 add_executable(iiwa_ros_pub_cmd scripts/trajectory_pub.cpp)
 target_include_directories(iiwa_ros_pub_cmd PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(iiwa_ros_pub_cmd ${PROJECT_NAME})
